@@ -16,8 +16,8 @@ int main(int argc, char **argv)
     MPI_Comm_size(MPI_COMM_WORLD, &model->mpi_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &model->mpi_rank);
 
-    model->m = atoi(argv[1]);
-    model->n = atoi(argv[2]);
+    model->n = atoi(argv[1]);
+    model->m = atoi(argv[2]);
     long lag = atol(argv[3]);
     double logprob = -INFINITY;
     double oldlogprob;
