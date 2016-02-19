@@ -4,6 +4,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "hmm.h"
 
 #define PRIOR 5.
@@ -48,6 +49,7 @@ int main(int argc, char **argv)
         fclose(model->o_file);
 
         gsl_rng *rng = gsl_rng_alloc(gsl_rng_taus);
+        gsl_rng_set(rng, time(NULL));
         model->a = malloc(sizeof(double) * model->n*model->n);
         model->b = malloc(sizeof(double) * model->n*model->m);
         double *alpha_n = malloc(sizeof(double) * model->n);
