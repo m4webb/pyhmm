@@ -42,7 +42,7 @@ int main(int argc, char **argv)
         for (i=1; i<model->mpi_size; i++)
         {
             fread(send, sizeof(long), model->t, model->o_file);
-            MPI_Send(send, model->t, MPI_LONG, 0, 0, MPI_COMM_WORLD);
+            MPI_Send(send, model->t, MPI_LONG, i, 0, MPI_COMM_WORLD);
         }
         free(send);
         fclose(model->o_file);
