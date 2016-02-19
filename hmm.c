@@ -214,5 +214,7 @@ int _hmm_write(hmm_model_t *model)
 {
     fwrite(model->a, sizeof(double), model->n*model->n, model->a_file);
     fwrite(model->b, sizeof(double), model->n*model->m, model->b_file);
+    fflush(model->a_file);
+    fflush(model->b_file);
     return 0;
 }
