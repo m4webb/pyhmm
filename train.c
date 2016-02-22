@@ -88,8 +88,11 @@ int main(int argc, char **argv)
     model->alpha = malloc(model->t*model->n*sizeof(double));
     model->beta = malloc(model->t*model->n*sizeof(double));
     model->gamma = malloc(model->t*model->n*sizeof(double));
-    model->digamma = malloc(model->t*model->n*model->n*sizeof(double));
     model->c = malloc(model->t*sizeof(double));
+    model->numer_nn = malloc(model->n*model->n*sizeof(double));
+    model->denom_nn = malloc(model->n*model->n*sizeof(double));
+    model->numer_nm = malloc(model->n*model->m*sizeof(double));
+    model->denom_nm = malloc(model->n*model->m*sizeof(double));
 
     do 
     {
@@ -117,7 +120,6 @@ int main(int argc, char **argv)
     free(model->alpha);
     free(model->beta);
     free(model->gamma);
-    free(model->digamma);
     free(model->c);
     free(model);
     MPI_Finalize();

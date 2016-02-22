@@ -10,8 +10,11 @@ typedef struct hmm_model_t {
     double *alpha;
     double *beta;
     double *gamma;
-    double *digamma;
     double *c;
+    double *numer_nn;
+    double *denom_nn;
+    double *numer_nm;
+    double *denom_nm;
     int mpi_rank;
     int mpi_size;
     MPI_Status status;

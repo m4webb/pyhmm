@@ -14,11 +14,14 @@ int _hmm_climb(hmm_model_t *model, double *logprob)
     double *alpha = model->alpha;
     double *beta = model->beta;
     double *gamma = model->gamma;
-    double *digamma = model->digamma;
     double *c = model->c;
-    double numer;
+    double *numer_nn = model->numer_nn;
+    double *denom_nn = model->denom_nn;
+    double *numer_nm = model->numer_nm;
+    double *denom_nm = model->denom_nm;
     double denom;
     int i, j, k;
+    double digamma;
 
     // forward
     c[0] = 0.;
@@ -71,6 +74,11 @@ int _hmm_climb(hmm_model_t *model, double *logprob)
         }
     }
     
+    for (i=0; i<n*n; i++)
+    {
+        numer_nn[i] = 0.;
+    }
+
     // gammas
     for (k=0; k<(t-1); k++)
     {
@@ -88,12 +96,14 @@ int _hmm_climb(hmm_model_t *model, double *logprob)
             gamma[k*n + i] = 0.;
             for (j=0; j<n; j++)
             {
-                digamma[k*n*n + i*n + j] = alpha[k*n + i]*a[i*n + j] *b[j*m +
+                digamma = alpha[k*n + i]*a[i*n + j] *b[j*m +
                         o[k+1]]*beta[(k+1)*n + j]/denom;
-                gamma[k*n + i] += digamma[k*n*n + i*n + j];
+                numer_nn[i*n + j] += digamma;
+                gamma[k*n + i] += digamma;
             }
         }
     }
+
     denom = 0.;
     for (i=0; i<n; i++)
     {
@@ -109,40 +119,45 @@ int _hmm_climb(hmm_model_t *model, double *logprob)
     {
         for (j=0; j<n; j++)
         {
-            numer = 0.;
-            denom = 0.;
+            denom_nn[i*n + j] = 0.;
             for (k=0; k<(t-1); k++)
             {
-                numer += digamma[k*n*n + i*n + j];
-                denom += gamma[k*n + i];
+                denom_nn[i*n + j] += gamma[k*n + i];
             }
-            MPI_Allreduce(MPI_IN_PLACE, &numer, 1, MPI_DOUBLE, MPI_SUM,
-                    MPI_COMM_WORLD);
-            MPI_Allreduce(MPI_IN_PLACE, &denom, 1, MPI_DOUBLE, MPI_SUM,
-                    MPI_COMM_WORLD);
-            a[i*n + j] = numer/denom;
         }
     }
+    MPI_Allreduce(MPI_IN_PLACE, numer_nn, n*n, MPI_DOUBLE, MPI_SUM,
+            MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, denom_nn, n*n, MPI_DOUBLE, MPI_SUM,
+            MPI_COMM_WORLD);
+    for (i=0; i<n*n; i++)
+    {
+        a[i] = numer_nn[i]/denom_nn[i];
+    }
+
     for (i=0; i<n; i++)
     {
         for (j=0; j<m; j++)
         {
-            numer = 0.;
-            denom = 0.;
+            numer_nm[i*m + j] = 0.;
+            denom_nm[i*m + j] = 0.;
             for (k=0; k<t; k++)
             {
                 if (o[k] == j)
                 {
-                    numer += gamma[k*n + i];
+                    numer_nm[i*m + j] += gamma[k*n + i];
                 }
-                denom += gamma[k*n + i];
+                denom_nm[i*m + j] += gamma[k*n + i];
             }
-            MPI_Allreduce(MPI_IN_PLACE, &numer, 1, MPI_DOUBLE, MPI_SUM,
-                    MPI_COMM_WORLD);
-            MPI_Allreduce(MPI_IN_PLACE, &denom, 1, MPI_DOUBLE, MPI_SUM,
-                    MPI_COMM_WORLD);
-            b[i*m + j] = numer/denom;
         }
+    }
+    MPI_Allreduce(MPI_IN_PLACE, numer_nm, n*m, MPI_DOUBLE, MPI_SUM,
+            MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, denom_nm, n*m, MPI_DOUBLE, MPI_SUM,
+            MPI_COMM_WORLD);
+    for (i=0; i<n*m; i++)
+    {
+            b[i] = numer_nm[i]/denom_nm[i];
     }
 
     *logprob = 0.;
